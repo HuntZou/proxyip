@@ -119,7 +119,6 @@ public abstract class FreeProxyIpSpider {
             }
             list.add(proxyIp);
         }
-        System.out.println("add ip count: " + list.size());
         return list;
     }
 
@@ -135,7 +134,6 @@ public abstract class FreeProxyIpSpider {
                 public void run() {
                     List<ProxyIp> proxyIps = parseIpsFromHtml(getHtml());
                     ipList.addAll(proxyIps);
-                    System.out.println("load ip count: " + proxyIps.size());
                     pullLoading = false;
                 }
             }).start();
@@ -153,11 +151,10 @@ public abstract class FreeProxyIpSpider {
     }
 
     public ProxyIp pull(String anonLevel) {
-        System.out.println("pull method excute, pool size is : " + ipList.size());
+        System.out.println("当前ip池中有 " + ipList.size() + " 个ip");
         if (ipList != null && ipList.size() > 0) {
             ProxyIp proxyIp = ipList.get(0);
             ipList.remove(0);
-            System.out.println("proxyIp.getAnonLevel():" + proxyIp.getAnonLevel() + "---" + "anonLevel:" + anonLevel);
             if ((proxyIp.getAnonLevel() == null ? true : proxyIp.getAnonLevel().contains(anonLevel + "")) && canUse(proxyIp)) {
                 return proxyIp;
             }
@@ -261,7 +258,7 @@ public abstract class FreeProxyIpSpider {
      *
      * @return
      */
-    public boolean canUse(ProxyIp proxyIp) {
+    public static boolean canUse(ProxyIp proxyIp) {
         System.out.println("start test ip: " + proxyIp);
 
         //检测原理：是否可以通过此代理ip访问网络资源
@@ -270,19 +267,22 @@ public abstract class FreeProxyIpSpider {
         //设置超时时间
         try {
             //代理主机
+            HttpGet httpGet = new HttpGet("http://59.110.143.71:80/CMSpider4web/testProxyip");
+
             HttpHost proxyHost = new HttpHost(proxyIp.getIp(), proxyIp.getPort());
             RequestConfig config = RequestConfig.custom().setProxy(proxyHost).setConnectionRequestTimeout(1000).setConnectTimeout(1000).build();
-            HttpGet httpGet = new HttpGet("https://www.baidu.com/duty/index.html");
             httpGet.setConfig(config);
+
             CloseableHttpResponse response = httpClient.execute(httpGet);
             int statusCode = response.getStatusLine().getStatusCode();
             if (statusCode == 200) {
                 return true;
             } else {
+                System.out.println("status code : " + statusCode);
                 return false;
             }
         } catch (Exception e) {
-//            e.printStackTrace();
+            e.printStackTrace();
             return false;
         } finally {
             try {
