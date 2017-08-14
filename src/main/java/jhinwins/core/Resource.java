@@ -19,7 +19,7 @@ public class Resource {
     /**
      * pull的最大递归次数
      */
-    private static int MAX_RECURSION_COUNT = 20;
+    private static int MAX_RECURSION_COUNT = 50;
     /**
      * 代理ip池
      */
@@ -59,21 +59,24 @@ public class Resource {
 
 
     /**
+     * 当前递归数量
+     */
+    private static int recursionCount = 0;
+    /**
      * 拉取一个基本可用的代理ip
      *
      * @return
      */
-    private static int recursionCount = 0;
-
     public static ProxyIp pull() {
         //如果递归次数过多则直接返回空
         if ((++recursionCount) > MAX_RECURSION_COUNT) {
+            recursionCount = 0;
             return null;
         }
 
-
         if (proxyIpPool.size() > 0) {
             //获取ip池的第一个
+            recursionCount = 0;
             return proxyIpPool.peek();
         }
         try {

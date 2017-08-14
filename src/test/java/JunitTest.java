@@ -2,6 +2,7 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import jhinwins.core.FreeProxyIpSpider;
+import jhinwins.core.Resource;
 import jhinwins.core.impl.SimpleProxyIpSpider;
 import jhinwins.model.ProxyIp;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -26,12 +27,11 @@ import java.util.List;
  */
 public class JunitTest {
     @Test
-    public void T1() {
+    public void T1() throws InterruptedException {
         SimpleProxyIpSpider simpleProxyIpSpider = new SimpleProxyIpSpider("http://www.kuaidaili.com/free/inha/2/") {
             @Override
             public Elements parseIPHome(Document html) {
                 Elements elements = html.select("tr");
-                System.out.println("ipHome size : " + elements.size());
                 return elements;
             }
 
@@ -51,80 +51,13 @@ public class JunitTest {
 //            }
         };
 
-        while (simpleProxyIpSpider.canUse(simpleProxyIpSpider.pull())) {
-            System.out.println("bingo");
-        }
-    }
+        Resource.init(simpleProxyIpSpider);
 
-    @Test
-    public void T2() {
-        int count = 0;
         while (true) {
-            System.out.println("had test: " + ++count);
-            ProxyIp ip = new ProxyIp();
-            ip.setIp("115.221.124.120");
-            ip.setPort(48110);
-            boolean canUse = FreeProxyIpSpider.canUse(ip);
-            System.out.println("canUse:" + canUse);
+            ProxyIp ip = Resource.pull();
+            System.out.println(ip.getIp() + ":" + ip.getPort());
+            Thread.sleep(1000);
         }
     }
 
-    @Test
-    public void T3() throws IOException {
-        List<ProxyIp> proxyips = new ArrayList<ProxyIp>();
-
-        CloseableHttpClient httpClient = null;
-        BufferedReader reader = null;
-        try {
-            httpClient = HttpClients.createDefault();
-            HttpGet httpGet = new HttpGet("http://www.xdaili.cn/ipagent//freeip/getFreeIps");
-            CloseableHttpResponse response = httpClient.execute(httpGet);
-            reader = new BufferedReader(new InputStreamReader(response.getEntity().getContent()));
-            String res = "";
-            String buff;
-            while ((buff = reader.readLine()) != null) {
-                res += buff;
-            }
-
-            JSONObject res_json = JSON.parseObject(res);
-            JSONArray ips = res_json.getJSONArray("rows");
-            Iterator<Object> iterator = ips.iterator();
-
-            while (iterator.hasNext()) {
-                JSONObject ipItem = (JSONObject) iterator.next();
-                String ip = ipItem.getString("ip");
-                String port_str = ipItem.getString("port");
-                Integer port = Integer.parseInt(port_str);
-
-                ProxyIp proxyIp = new ProxyIp();
-                proxyIp.setIp(ip);
-                proxyIp.setPort(port);
-                proxyips.add(proxyIp);
-            }
-
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        } finally {
-            if (reader != null) {
-                try {
-                    reader.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                    // do nothing.
-                }
-            }
-            if (httpClient != null) {
-                try {
-                    httpClient.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                    // do nothing.
-                }
-            }
-        }
-
-        System.out.println("size is " + proxyips.size());
-
-    }
 }

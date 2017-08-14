@@ -36,12 +36,12 @@ public abstract class FreeProxyIpSpider {
     /**
      * 代理ip池
      */
-    private List<ProxyIp> ipList = new ArrayList<ProxyIp>();
+    private static List<ProxyIp> ipList = new ArrayList<ProxyIp>();
 
     /**
      * 是否正在从网页上ip
      */
-    private boolean pullLoading = false;
+    private static boolean pullLoading = false;
 
     /**
      * 被爬取网页的url
@@ -95,7 +95,11 @@ public abstract class FreeProxyIpSpider {
      *
      * @return 不会返回空
      */
-    private List<ProxyIp> parseIpsFromHtml(String html) {
+    public List<ProxyIp> parseIpsFromHtml() {
+        return parseIpsFromHtml(getHtml());
+    }
+
+    public List<ProxyIp> parseIpsFromHtml(String html) {
         List<ProxyIp> list = new ArrayList<ProxyIp>();
         //使用jsoup解析html
         Document document = Jsoup.parse(html);
@@ -120,57 +124,6 @@ public abstract class FreeProxyIpSpider {
             list.add(proxyIp);
         }
         return list;
-    }
-
-    /**
-     * 异步向ip池里添加ip
-     *
-     * @return
-     */
-    private void addList() {
-        if (!pullLoading) {
-            pullLoading = true;
-            new Thread(new Runnable() {
-                public void run() {
-                    List<ProxyIp> proxyIps = parseIpsFromHtml(getHtml());
-                    ipList.addAll(proxyIps);
-                    pullLoading = false;
-                }
-            }).start();
-        }
-    }
-
-    /**
-     * 拉取一个代理ip对象
-     * 并将已经拉取的ip对象移除
-     *
-     * @return 返回队列中的第一个，如果队列为空则返回空
-     */
-    public ProxyIp pull() {
-        return pull("");
-    }
-
-    public ProxyIp pull(String anonLevel) {
-        System.out.println("当前ip池中有 " + ipList.size() + " 个ip");
-        if (ipList != null && ipList.size() > 0) {
-            ProxyIp proxyIp = ipList.get(0);
-            ipList.remove(0);
-            if ((proxyIp.getAnonLevel() == null ? true : proxyIp.getAnonLevel().contains(anonLevel + "")) && canUse(proxyIp)) {
-                return proxyIp;
-            }
-        }
-        //如果ip数量少于最少数量时就从网页上获取
-        if (ipList.size() < MIN_IP_COUNT) {
-            addList();
-        }
-        //延时50毫秒再抓取
-        try {
-            Thread.sleep(50);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-
-        return pull(anonLevel);
     }
 
     /**
@@ -252,46 +205,5 @@ public abstract class FreeProxyIpSpider {
      * @return 返回上次验证到现在的时间
      */
     public abstract Long parseLastverify(Element html);
-
-    /**
-     * 该方法用来检测代理ip是否可用
-     *
-     * @return
-     */
-    public static boolean canUse(ProxyIp proxyIp) {
-        System.out.println("start test ip: " + proxyIp);
-
-        //检测原理：是否可以通过此代理ip访问网络资源
-
-        CloseableHttpClient httpClient = HttpClients.createDefault();
-        //设置超时时间
-        try {
-            //代理主机
-            HttpGet httpGet = new HttpGet("http://59.110.143.71:80/CMSpider4web/testProxyip");
-
-            HttpHost proxyHost = new HttpHost(proxyIp.getIp(), proxyIp.getPort());
-            RequestConfig config = RequestConfig.custom().setProxy(proxyHost).setConnectionRequestTimeout(1000).setConnectTimeout(1000).build();
-            httpGet.setConfig(config);
-
-            CloseableHttpResponse response = httpClient.execute(httpGet);
-            int statusCode = response.getStatusLine().getStatusCode();
-            if (statusCode == 200) {
-                return true;
-            } else {
-                System.out.println("status code : " + statusCode);
-                return false;
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-            return false;
-        } finally {
-            try {
-                httpClient.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-                // TODO: 2017/7/24  
-            }
-        }
-    }
 
 }
