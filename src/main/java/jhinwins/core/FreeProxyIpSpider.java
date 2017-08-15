@@ -18,6 +18,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 
 /**
@@ -74,7 +75,7 @@ public abstract class FreeProxyIpSpider {
      *
      * @return 不会返回空
      */
-    public List<ProxyIp> parseIpsFromHtml() {
+    public LinkedList<ProxyIp> parseIpsFromHtml() {
         try {
             return parseIpsFromHtml(getHtml());
         } catch (LoadHtmlException e) {
@@ -83,8 +84,8 @@ public abstract class FreeProxyIpSpider {
         }
     }
 
-    public List<ProxyIp> parseIpsFromHtml(String html) {
-        List<ProxyIp> list = new ArrayList<ProxyIp>();
+    public LinkedList<ProxyIp> parseIpsFromHtml(String html) {
+        LinkedList<ProxyIp> list = new LinkedList<ProxyIp>();
         //使用jsoup解析html
         Document document = Jsoup.parse(html);
 

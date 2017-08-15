@@ -63,11 +63,9 @@ public class JunitTest {
 
     @Test
     public void T2() {
-        ProxyIp proxyIp = new ProxyIp();
-        proxyIp.setIp("27.153.128.31");
-        proxyIp.setPort(26958);
-        boolean b = IpUtils.canCMUse(proxyIp);
-        System.out.println("b:" + b);
+        for (int i = 0; i < 50; i++) {
+            System.out.println(1000 * 30 + (int) (Math.random() * 20000));
+        }
     }
 
 }

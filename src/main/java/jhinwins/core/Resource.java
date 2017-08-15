@@ -1,8 +1,10 @@
 package jhinwins.core;
 
+import com.alibaba.fastjson.JSONObject;
 import jhinwins.model.ProxyIp;
 import jhinwins.utils.IpUtils;
 
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -21,9 +23,17 @@ public class Resource {
      */
     private static int MAX_RECURSION_COUNT = 50;
     /**
+     * 最少多少个检测周期更换一次ip源
+     */
+    private static int MIN_DETECTION_COUNT = 30;
+    /**
      * 代理ip池
      */
     private static LinkedList<ProxyIp> proxyIpPool = new LinkedList<ProxyIp>();
+    /**
+     * 代理ip检测次数
+     */
+    private static int detectionCount = 0;
 
     public static void init(FreeProxyIpSpider freeProxyIpSpider) {
         Resource.freeProxyIpSpider = freeProxyIpSpider;
@@ -39,23 +49,37 @@ public class Resource {
         new Thread(new Runnable() {
             public void run() {
                 while (true) {
-                    System.out.println("检测ip开始");
-                    long t = System.currentTimeMillis();
-                    //检测ip池数量
+
+                    ++detectionCount;
+
+                    //检测ip池数量   并且每过一段时间重新加载ip
                     if (proxyIpPool.size() < MIN_POLL_COUNT) {
-                        loadIP();
+                        List<ProxyIp> proxyIps = loadIP();
+                        if (proxyIps != null && proxyIps.size() > 0) {
+                            proxyIpPool.addAll(proxyIps);
+                            detectionCount = 0;
+                        }
+                    }
+                    if (detectionCount > MIN_DETECTION_COUNT) {
+                        detectionCount = 0;
+                        LinkedList<ProxyIp> proxyIps = loadIP();
+                        if (proxyIps != null && proxyIps.size() > 0) {
+                            proxyIpPool = proxyIps;
+                        }
                     }
 
+
+                    long preT = System.currentTimeMillis();
                     //检测首个ip是否可用
                     while (proxyIpPool.peek() != null && !IpUtils.canCMUse(proxyIpPool.peek())) {
-                        System.out.println("检测出一个无用ip");
                         proxyIpPool.removeFirst();
                     }
+                    System.out.println("一个当前使用ip检测循环结束，ip池size:" + proxyIpPool.size() + "------耗时：" + (System.currentTimeMillis() - preT));
                     try {
-                        Thread.sleep(1000 * 30 + (int) (Math.random() * 20));
+                        Thread.sleep(1000 * 30 + (int) (Math.random() * 20000));
                     } catch (InterruptedException e) {
+                        continue;
                     }
-                    System.out.println("检测结束，用时：" + (System.currentTimeMillis() - t) + "，池中ip数：" + proxyIpPool.size());
                 }
             }
         }).start();
@@ -91,14 +115,21 @@ public class Resource {
         return pull();
     }
 
+    public static String getInfo() {
+        JSONObject jsonObject = new JSONObject();
+
+        jsonObject.put("currentIP", proxyIpPool.peek().getIp() + ":" + proxyIpPool.peek().getPort());
+
+
+        return jsonObject.toJSONString();
+    }
+
     /**
      * 从代理ip网站爬取代理ip
      */
-    private static void loadIP() {
-        List<ProxyIp> proxyIps = freeProxyIpSpider.parseIpsFromHtml();
-        if (proxyIps != null && proxyIps.size() > 0) {
-            proxyIpPool.addAll(proxyIps);
-        }
+    private static LinkedList<ProxyIp> loadIP() {
+        LinkedList<ProxyIp> proxyIps = freeProxyIpSpider.parseIpsFromHtml();
+        return proxyIps;
     }
 
 }

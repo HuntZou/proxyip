@@ -21,6 +21,11 @@ import java.io.IOException;
  * Desc:
  */
 public class IpUtils {
+    /**
+     * 连接超时
+     */
+    private static int CONNECTION_TIME = 10 * 1000;
+    private static int CM_CONNECTION_TIME = 10 * 1000;
 
     /**
      * 该方法用来检测代理ip是否可用
@@ -37,7 +42,7 @@ public class IpUtils {
             HttpGet httpGet = new HttpGet("http://59.110.143.71:80/CMSpider4web/testProxyip");
 
             HttpHost proxyHost = new HttpHost(proxyIp.getIp(), proxyIp.getPort());
-            RequestConfig config = RequestConfig.custom().setProxy(proxyHost).setConnectionRequestTimeout(10000).setConnectTimeout(10000).build();
+            RequestConfig config = RequestConfig.custom().setProxy(proxyHost).setConnectionRequestTimeout(3000).setConnectTimeout(CONNECTION_TIME).build();
             httpGet.setConfig(config);
 
             CloseableHttpResponse response = httpClient.execute(httpGet);
@@ -74,7 +79,7 @@ public class IpUtils {
 
             //代理主机
             HttpHost proxyHost = new HttpHost(proxyIp.getIp(), proxyIp.getPort());
-            RequestConfig config = RequestConfig.custom().setProxy(proxyHost).setConnectionRequestTimeout(10000).setConnectTimeout(10000).build();
+            RequestConfig config = RequestConfig.custom().setProxy(proxyHost).setConnectionRequestTimeout(3000).setConnectTimeout(CM_CONNECTION_TIME).build();
             httpPost.setConfig(config);
             httpPost.setHeader("User-Agent", "Mozilla/5.0 (Windows NT 6.1) AppleWebKit/535.1 (KHTML, like Gecko) Chrome/13.0.782.41 Safari/535.1 QQBrowser/6.9.11079.201");
 
@@ -85,11 +90,14 @@ public class IpUtils {
             stringEntity.setContentType("application/x-www-form-urlencoded");
             httpPost.setEntity(stringEntity);
 
+            long preT = System.currentTimeMillis();
             CloseableHttpResponse response = httpClient.execute(httpPost);
             String entity = EntityUtils.toString(response.getEntity());
 
             int statusCode = response.getStatusLine().getStatusCode();
-            System.out.println("检测ip：" + proxyIp.getIp() + ":" + proxyIp.getPort() + "-----statusCode:" + statusCode + "----entity:" + entity);
+
+            System.out.println("检测ip：" + proxyIp.getIp() + ":" + proxyIp.getPort() + "----耗时：" + (System.currentTimeMillis() - preT) + "----statusCode:" + statusCode + "----entity:" + entity);
+
             if (statusCode == 200) {
                 JSONObject parseObject = JSONObject.parseObject(entity);
                 if (parseObject.getJSONArray("data").size() > 0 && 299757 == (parseObject.getJSONArray("data").getJSONObject(0).getInteger("id"))) {
