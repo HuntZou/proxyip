@@ -5,6 +5,7 @@ import jhinwins.core.FreeProxyIpSpider;
 import jhinwins.core.Resource;
 import jhinwins.core.impl.SimpleProxyIpSpider;
 import jhinwins.model.ProxyIp;
+import jhinwins.utils.IpUtils;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.CloseableHttpClient;
@@ -58,6 +59,15 @@ public class JunitTest {
             System.out.println(ip.getIp() + ":" + ip.getPort());
             Thread.sleep(1000);
         }
+    }
+
+    @Test
+    public void T2() {
+        ProxyIp proxyIp = new ProxyIp();
+        proxyIp.setIp("27.153.128.31");
+        proxyIp.setPort(26958);
+        boolean b = IpUtils.canCMUse(proxyIp);
+        System.out.println("b:" + b);
     }
 
 }

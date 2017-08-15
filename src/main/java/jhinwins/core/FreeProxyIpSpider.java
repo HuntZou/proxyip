@@ -1,6 +1,7 @@
 package jhinwins.core;
 
 
+import jhinwins.Exception.LoadHtmlException;
 import jhinwins.model.ProxyIp;
 import org.apache.http.HttpHost;
 import org.apache.http.client.config.RequestConfig;
@@ -26,24 +27,6 @@ import java.util.List;
 public abstract class FreeProxyIpSpider {
 
     /**
-     * ip池中ip最少数量
-     */
-    public static int MIN_IP_COUNT = 5;
-    /**
-     * ip池中ip添加到的数量
-     */
-    public static int MIN_ADD_IP_COUNT = 15;
-    /**
-     * 代理ip池
-     */
-    private static List<ProxyIp> ipList = new ArrayList<ProxyIp>();
-
-    /**
-     * 是否正在从网页上ip
-     */
-    private static boolean pullLoading = false;
-
-    /**
      * 被爬取网页的url
      */
     private String providerUrl = null;
@@ -52,17 +35,13 @@ public abstract class FreeProxyIpSpider {
         this.providerUrl = providerUrl;
     }
 
-    public List<ProxyIp> getIpList() {
-        return ipList;
-    }
-
     /**
      * 获取指定url的html
      *
      * @return
      * @throws IOException
      */
-    public String getHtml() {
+    public String getHtml() throws LoadHtmlException {
         String html = "";
 
         CloseableHttpClient httpClient = HttpClients.createDefault();
@@ -76,7 +55,7 @@ public abstract class FreeProxyIpSpider {
                 html += buff;
             }
         } catch (IOException e) {
-            throw new RuntimeException("获取html时发生异常");
+            throw new LoadHtmlException();
         } finally {
             if (httpClient != null) {
                 try {
@@ -96,7 +75,12 @@ public abstract class FreeProxyIpSpider {
      * @return 不会返回空
      */
     public List<ProxyIp> parseIpsFromHtml() {
-        return parseIpsFromHtml(getHtml());
+        try {
+            return parseIpsFromHtml(getHtml());
+        } catch (LoadHtmlException e) {
+            e.printStackTrace();
+            return null;
+        }
     }
 
     public List<ProxyIp> parseIpsFromHtml(String html) {

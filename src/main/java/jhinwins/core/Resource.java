@@ -39,19 +39,23 @@ public class Resource {
         new Thread(new Runnable() {
             public void run() {
                 while (true) {
+                    System.out.println("检测ip开始");
+                    long t = System.currentTimeMillis();
                     //检测ip池数量
                     if (proxyIpPool.size() < MIN_POLL_COUNT) {
                         loadIP();
                     }
 
                     //检测首个ip是否可用
-                    while (proxyIpPool.peek() != null && !IpUtils.canUse(proxyIpPool.peek())) {
+                    while (proxyIpPool.peek() != null && !IpUtils.canCMUse(proxyIpPool.peek())) {
+                        System.out.println("检测出一个无用ip");
                         proxyIpPool.removeFirst();
                     }
                     try {
-                        Thread.sleep(1000 * 30);
+                        Thread.sleep(1000 * 30 + (int) (Math.random() * 20));
                     } catch (InterruptedException e) {
                     }
+                    System.out.println("检测结束，用时：" + (System.currentTimeMillis() - t) + "，池中ip数：" + proxyIpPool.size());
                 }
             }
         }).start();
@@ -62,6 +66,7 @@ public class Resource {
      * 当前递归数量
      */
     private static int recursionCount = 0;
+
     /**
      * 拉取一个基本可用的代理ip
      *
