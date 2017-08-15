@@ -3,12 +3,11 @@ package jhinwins.core;
 
 import jhinwins.Exception.LoadHtmlException;
 import jhinwins.model.ProxyIp;
-import org.apache.http.HttpHost;
-import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
+import org.apache.log4j.Logger;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -17,15 +16,14 @@ import org.jsoup.select.Elements;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.ArrayList;
 import java.util.LinkedList;
-import java.util.List;
 
 /**
  * Created by Jhinwins on 2017/7/21  10:55.
  * Desc:
  */
 public abstract class FreeProxyIpSpider {
+    private static Logger logger= Logger.getLogger(FreeProxyIpSpider.class);
 
     /**
      * 被爬取网页的url
@@ -56,12 +54,14 @@ public abstract class FreeProxyIpSpider {
                 html += buff;
             }
         } catch (IOException e) {
+            logger.error(e.getMessage());
             throw new LoadHtmlException();
         } finally {
             if (httpClient != null) {
                 try {
                     httpClient.close();
                 } catch (IOException e) {
+                    logger.error(e.getMessage());
                     //do nothing
                 }
             }
@@ -79,6 +79,7 @@ public abstract class FreeProxyIpSpider {
         try {
             return parseIpsFromHtml(getHtml());
         } catch (LoadHtmlException e) {
+            logger.error(e.getMessage());
             e.printStackTrace();
             return null;
         }

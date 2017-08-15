@@ -10,6 +10,7 @@ import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
+import org.apache.log4j.Logger;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
@@ -27,6 +28,7 @@ import java.util.List;
  * Desc:
  */
 public class JunitTest {
+    private static Logger logger = Logger.getLogger(JunitTest.class);
     @Test
     public void T1() throws InterruptedException {
         SimpleProxyIpSpider simpleProxyIpSpider = new SimpleProxyIpSpider("http://www.kuaidaili.com/free/inha/2/") {
@@ -63,9 +65,8 @@ public class JunitTest {
 
     @Test
     public void T2() {
-        for (int i = 0; i < 50; i++) {
-            System.out.println(1000 * 30 + (int) (Math.random() * 20000));
-        }
+        logger.info("this is info");
+        logger.debug("this is debug");
     }
 
 }

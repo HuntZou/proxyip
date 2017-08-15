@@ -3,8 +3,8 @@ package jhinwins.core;
 import com.alibaba.fastjson.JSONObject;
 import jhinwins.model.ProxyIp;
 import jhinwins.utils.IpUtils;
+import org.apache.log4j.Logger;
 
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -13,6 +13,7 @@ import java.util.List;
  * Desc:使用代理ip之前，您必须首先调用init方法，建议在应用初始化的阶段就调用该方法
  */
 public class Resource {
+    private static Logger logger = Logger.getLogger(Resource.class);
     private static FreeProxyIpSpider freeProxyIpSpider;
     /**
      * ip池中存储最少个数
@@ -37,7 +38,7 @@ public class Resource {
 
     public static void init(FreeProxyIpSpider freeProxyIpSpider) {
         Resource.freeProxyIpSpider = freeProxyIpSpider;
-        System.out.println("代理ip类初始化完成");
+        logger.info("代理ip类初始化完成");
     }
 
     /**
@@ -74,10 +75,11 @@ public class Resource {
                     while (proxyIpPool.peek() != null && !IpUtils.canCMUse(proxyIpPool.peek())) {
                         proxyIpPool.removeFirst();
                     }
-                    System.out.println("一个当前使用ip检测循环结束，ip池size:" + proxyIpPool.size() + "------耗时：" + (System.currentTimeMillis() - preT));
+                    logger.info("一个当前使用ip检测循环结束，ip池size:" + proxyIpPool.size() + "------耗时：" + (System.currentTimeMillis() - preT));
                     try {
                         Thread.sleep(1000 * 30 + (int) (Math.random() * 20000));
                     } catch (InterruptedException e) {
+                        logger.error(e.getMessage());
                         continue;
                     }
                 }
@@ -111,6 +113,7 @@ public class Resource {
         try {
             Thread.sleep(500);
         } catch (InterruptedException e) {
+            logger.error(e.getMessage());
         }
         return pull();
     }
