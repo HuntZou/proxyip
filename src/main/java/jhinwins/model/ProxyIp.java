@@ -55,17 +55,17 @@ public class ProxyIp {
     /**
      * 匿名度
      */
-    private String anonLevel;
+    private String anonLevel = "none";
 
     /**
      * 类型
      */
-    private String type;
+    private String type  = "none";
 
     /**
      * get/post支持类型
      */
-    private String supType;
+    private String supType = "none";
 
     /**
      * ip所在位置
@@ -98,28 +98,6 @@ public class ProxyIp {
     public ProxyIp(String ip, Integer port) {
         this.ip = ip;
         this.port = port;
-    }
-
-    public ProxyIp(String ip, Integer port, String anonLevel) {
-        this.ip = ip;
-        this.port = port;
-        this.anonLevel = anonLevel;
-    }
-
-    @Override
-    public String toString() {
-        return "ProxyIp{" +
-                "ip='" + ip + '\'' +
-                ", port=" + port +
-                ", anonLevel='" + anonLevel + '\'' +
-                ", type='" + type + '\'' +
-                ", supType='" + supType + '\'' +
-                ", location='" + location + '\'' +
-                ", speed=" + speed +
-                ", age=" + age +
-                ", lastverify=" + lastverify +
-                ", acquireTime=" + acquireTime +
-                '}';
     }
 
     //------------------------------------------get/set------------------------------

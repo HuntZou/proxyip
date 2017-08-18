@@ -20,7 +20,7 @@ import java.util.LinkedList;
 
 /**
  * Created by Jhinwins on 2017/7/21  10:55.
- * Desc:
+ * Desc: 拥有拉取代理ip的功能
  */
 public abstract class FreeProxyIpSpider {
     private static Logger logger = Logger.getLogger(FreeProxyIpSpider.class);

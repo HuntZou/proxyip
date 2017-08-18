@@ -1,6 +1,8 @@
-package jhinwins.utils;
+package jhinwins.cache;
 
 import org.apache.log4j.Logger;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.JedisPoolConfig;
@@ -8,19 +10,19 @@ import redis.clients.jedis.exceptions.JedisConnectionException;
 import redis.clients.jedis.exceptions.JedisDataException;
 import redis.clients.jedis.exceptions.JedisException;
 
-import java.util.Set;
-
 
 /**
  * Created by Jhinwins on 2017/8/17  15:11.
  * Desc:
  */
-public class RedisUtils {
-    private static Logger logger = Logger.getLogger(RedisUtils.class);
+@Configuration
+public class RedisPool {
+    private static Logger logger = Logger.getLogger(RedisPool.class);
 
     private static JedisPool jedisPool = null;
 
-    private static Jedis getJedis() {
+    @Bean
+    private Jedis getJedis() {
         if (jedisPool == null) {
             JedisPoolConfig config = new JedisPoolConfig();
             config.setMaxTotal(512); // 可用连接实例的最大数目,如果赋值为-1,表示不限制.
@@ -52,7 +54,7 @@ public class RedisUtils {
         }
     }
 
-    private static void closeResource(Jedis jedis, boolean occurException) {
+    public static void closeResource(Jedis jedis, boolean occurException) {
         try {
             if (occurException) {
                 returnJedis(jedis);
@@ -64,7 +66,7 @@ public class RedisUtils {
         }
     }
 
-    private static boolean handleJedisException(JedisException jedisException) {
+    public static boolean handleJedisException(JedisException jedisException) {
         if (jedisException instanceof JedisConnectionException) {
             logger.error("Redis connection lost.", jedisException);
         } else if (jedisException instanceof JedisDataException) {
@@ -79,83 +81,4 @@ public class RedisUtils {
         }
         return true;
     }
-
-    public static synchronized Long zadd(String key, double score, String member) {
-        Jedis jedis = getJedis();
-        boolean broken = false;
-        Long zadd = null;
-        try {
-            zadd = jedis.zadd(key, score, member);
-        } catch (JedisException e) {
-            logger.error("jedis zadd error:" + e.getMessage());
-            broken = handleJedisException(e);
-        } finally {
-            closeResource(jedis, broken);
-        }
-        return zadd;
-
-    }
-
-    public static synchronized Long zremrangeByRank(String key, long start, long end) {
-        Jedis jedis = getJedis();
-        boolean broken = false;
-        Long aLong = null;
-        try {
-            aLong = jedis.zremrangeByRank(key, start, end);
-        } catch (JedisException e) {
-            logger.error("jedis zremrangeByRank error:" + e.getMessage());
-            broken = handleJedisException(e);
-        } finally {
-            closeResource(jedis, broken);
-        }
-        return aLong;
-
-    }
-
-    public static synchronized Long zcard(String key) {
-        Jedis jedis = getJedis();
-        boolean broken = false;
-        Long zcard = null;
-        try {
-            zcard = jedis.zcard(key);
-        } catch (JedisException e) {
-            logger.error("jedis zcard error:" + e.getMessage());
-            broken = handleJedisException(e);
-        } finally {
-            closeResource(jedis, broken);
-        }
-        return zcard;
-
-    }
-
-    public static synchronized Long zrem(String key, String... members) {
-        Jedis jedis = getJedis();
-        boolean broken = false;
-        Long zrem = null;
-        try {
-            zrem = jedis.zrem(key, members);
-        } catch (JedisException e) {
-            logger.error("jedis zrem error:" + e.getMessage());
-            broken = handleJedisException(e);
-        } finally {
-            closeResource(jedis, broken);
-        }
-        return zrem;
-    }
-
-    public static synchronized Set<String> zrange(String key, long start, long end) {
-        Jedis jedis = getJedis();
-        boolean broken = false;
-        Set<String> zrange = null;
-        try {
-            zrange = jedis.zrange(key, start, end);
-        } catch (JedisException e) {
-            logger.error("jedis zrange error:" + e.getMessage());
-            broken = handleJedisException(e);
-        } finally {
-            closeResource(jedis, broken);
-        }
-        return zrange;
-    }
-
 }

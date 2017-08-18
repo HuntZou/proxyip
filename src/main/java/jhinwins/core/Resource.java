@@ -3,7 +3,7 @@ package jhinwins.core;
 import com.alibaba.fastjson.JSON;
 import jhinwins.model.ProxyIp;
 import jhinwins.utils.IpUtils;
-import jhinwins.utils.RedisUtils;
+import jhinwins.cache.RedisPool;
 import org.apache.log4j.Logger;
 
 import java.util.Iterator;
@@ -60,6 +60,7 @@ public class Resource {
         detectionIpPool();
     }
 
+
     /**
      * 保证pull的有效性
      */
@@ -73,7 +74,7 @@ public class Resource {
                     ++detectionCount;
 
                     //检测ip池数量 少于最少数量就加载
-                    if (RedisUtils.zcard(AFTER_NET_FILTER_PROXY_IP_POLL) < MIN_POLL_COUNT) {
+                    if (RedisPool.zcard(AFTER_NET_FILTER_PROXY_IP_POLL) < MIN_POLL_COUNT) {
                         logger.info("ip池中数量过少，准备加载");
                         loadIP2Redis(loadIP());
                         detectionCount = 0;
@@ -90,10 +91,10 @@ public class Resource {
                     //检测首个ip是否可用
                     ProxyIp proxyIp = pull();
                     while (proxyIp != null && IpUtils.canCMUse(proxyIp) == IpUtils.PROXY_IP_CANT_USE) {
-                        RedisUtils.zrem(AFTER_NET_FILTER_PROXY_IP_POLL, JSON.toJSONString(proxyIp));
+                        RedisPool.zrem(AFTER_NET_FILTER_PROXY_IP_POLL, JSON.toJSONString(proxyIp));
                         logger.info("检测首个ip " + JSON.toJSONString(proxyIp) + " 不可用，已移除");
                     }
-                    logger.info("一个当前使用ip检测循环结束，ip池size:" + RedisUtils.zcard(AFTER_NET_FILTER_PROXY_IP_POLL) + "------检测耗时：" + (System.currentTimeMillis() - preT));
+                    logger.info("一个当前使用ip检测循环结束，ip池size:" + RedisPool.zcard(AFTER_NET_FILTER_PROXY_IP_POLL) + "------检测耗时：" + (System.currentTimeMillis() - preT));
                     try {
                         Thread.sleep(1000 * 30 + (int) (Math.random() * 20000));
                     } catch (InterruptedException e) {
@@ -123,7 +124,7 @@ public class Resource {
             return null;
         }
 
-        Set<String> zrange = RedisUtils.zrange(AFTER_NET_FILTER_PROXY_IP_POLL, 0, 0);
+        Set<String> zrange = RedisPool.zrange(AFTER_NET_FILTER_PROXY_IP_POLL, 0, 0);
         if (zrange != null && zrange.size() > 0) {
             String proxy_str = zrange.iterator().next();
             logger.info("pull获取ip:" + proxy_str);
@@ -131,7 +132,7 @@ public class Resource {
             try {
                 proxyIp = JSON.parseObject(proxy_str, ProxyIp.class);
             } catch (Exception e) {
-                RedisUtils.zrem(AFTER_NET_FILTER_PROXY_IP_POLL, proxy_str);
+                RedisPool.zrem(AFTER_NET_FILTER_PROXY_IP_POLL, proxy_str);
                 logger.error("单个代理ip解析出错,已移除:" + e.getMessage());
             }
             return proxyIp;
@@ -213,13 +214,13 @@ public class Resource {
             if (conneT == IpUtils.PROXY_IP_CANT_USE || conneT > connectionTimeOut) {
                 iterator.remove();
             } else {
-                RedisUtils.zadd(AFTER_NET_FILTER_PROXY_IP_POLL, conneT, JSON.toJSONString(proxyIp));
+                RedisPool.zadd(AFTER_NET_FILTER_PROXY_IP_POLL, conneT, JSON.toJSONString(proxyIp));
             }
         }
         logger.info(AFTER_NET_FILTER_PROXY_IP_POLL + "  过滤后的ip池数量: " + copyOriginalPoll.size());
 
         //清除多余的代理ip
-        RedisUtils.zremrangeByRank(AFTER_NET_FILTER_PROXY_IP_POLL, MAX_POLL_COUNT, RedisUtils.zcard(AFTER_NET_FILTER_PROXY_IP_POLL));
+        RedisPool.zremrangeByRank(AFTER_NET_FILTER_PROXY_IP_POLL, MAX_POLL_COUNT, RedisPool.zcard(AFTER_NET_FILTER_PROXY_IP_POLL));
 
         return copyOriginalPoll;
     }

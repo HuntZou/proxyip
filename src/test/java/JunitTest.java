@@ -1,28 +1,10 @@
-import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONArray;
-import com.alibaba.fastjson.JSONObject;
-import jhinwins.core.FreeProxyIpSpider;
 import jhinwins.core.Resource;
 import jhinwins.core.impl.SimpleProxyIpSpider;
-import jhinwins.model.ProxyIp;
-import jhinwins.utils.IpUtils;
-import jhinwins.utils.RedisUtils;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
-import org.apache.log4j.Logger;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.junit.Test;
-import redis.clients.jedis.Jedis;
-
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.util.*;
-import java.util.concurrent.CopyOnWriteArrayList;
+import org.springframework.context.support.ClassPathXmlApplicationContext;
 
 /**
  * Created by Jhinwins on 2017/7/24  17:17.
@@ -73,6 +55,10 @@ public class JunitTest {
             Thread.sleep(1000);
         }
 
+    }
+
+    @Test
+    public void tSpring() {
     }
 
 }
