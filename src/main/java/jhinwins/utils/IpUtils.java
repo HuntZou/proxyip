@@ -3,36 +3,55 @@ package jhinwins.utils;
 import com.alibaba.fastjson.JSONObject;
 import jhinwins.core.Resource;
 import jhinwins.model.ProxyIp;
+import org.apache.http.HttpEntity;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.utils.HttpClientUtils;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
+import org.apache.log4j.Logger;
+import redis.clients.jedis.JedisPool;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by Jhinwins on 2017/8/14  14:44.
  * Desc:
  */
 public class IpUtils {
+    private static Logger logger = Logger.getLogger(IpUtils.class);
     /**
      * 连接超时
      */
-    private static int CONNECTION_TIME = 10 * 1000;
-    private static int CM_CONNECTION_TIME = 10 * 1000;
+    private static int CONNECTION_TIME = 3 * 1000;
+    private static int CM_CONNECTION_TIME = 3 * 1000;
+    /**
+     * 检测链接超时线程池
+     */
+    private static List<Thread> detectionTimeOutThreads = new ArrayList<Thread>();
+
+
+    /**
+     * ip不可用
+     */
+    public static int PROXY_IP_CANT_USE = -1;
 
     /**
      * 该方法用来检测代理ip是否可用
      *
      * @return
      */
-    public static boolean canUse(ProxyIp proxyIp) {
+    public static long canUse(ProxyIp proxyIp) {
+        logger.info("检测ip：" + proxyIp.getIp());
         //检测原理：是否可以通过此代理ip访问网络资源
 
         CloseableHttpClient httpClient = HttpClients.createDefault();
@@ -42,28 +61,35 @@ public class IpUtils {
             HttpGet httpGet = new HttpGet("http://59.110.143.71:80/CMSpider4web/testProxyip");
 
             HttpHost proxyHost = new HttpHost(proxyIp.getIp(), proxyIp.getPort());
-            RequestConfig config = RequestConfig.custom().setProxy(proxyHost).setConnectionRequestTimeout(3000).setConnectTimeout(CONNECTION_TIME).build();
+            RequestConfig config = RequestConfig.custom().setProxy(proxyHost).setConnectionRequestTimeout(3000).setConnectTimeout(CONNECTION_TIME).setSocketTimeout(3000).build();
             httpGet.setConfig(config);
 
+            long preT = System.currentTimeMillis();
+            System.out.println("准备执行execute");
             CloseableHttpResponse response = httpClient.execute(httpGet);
+            System.out.println("执行完毕");
+            long connT = System.currentTimeMillis() - preT;
             int statusCode = response.getStatusLine().getStatusCode();
             if (statusCode == 200) {
-                return true;
+                return connT;
             } else {
-                return false;
+                return PROXY_IP_CANT_USE;
             }
         } catch (Exception e) {
-            return false;
+            logger.error("检测该ip" + proxyIp.getIp() + "不可用" + e.getMessage());
+            return PROXY_IP_CANT_USE;
         } finally {
             try {
                 if (httpClient != null)
                     httpClient.close();
             } catch (IOException e) {
-                e.printStackTrace();
+                logger.error("检测ip发生重大异常" + e.getMessage());
                 // TODO: 2017/7/24
             }
         }
     }
+
+    static boolean flag = false;
 
     /**
      * 检测网易云是否可以使用
@@ -71,15 +97,15 @@ public class IpUtils {
      * @param proxyIp
      * @return
      */
-    public static boolean canCMUse(ProxyIp proxyIp) {
-        CloseableHttpClient httpClient = HttpClients.createDefault();
+    public static long canCMUse(ProxyIp proxyIp) {
+        final CloseableHttpClient httpClient = HttpClients.createDefault();
         //设置超时时间
         try {
             HttpPost httpPost = new HttpPost("https://music.163.com/weapi/song/enhance/player/url?csrf_token=");
 
             //代理主机
             HttpHost proxyHost = new HttpHost(proxyIp.getIp(), proxyIp.getPort());
-            RequestConfig config = RequestConfig.custom().setProxy(proxyHost).setConnectionRequestTimeout(3000).setConnectTimeout(CM_CONNECTION_TIME).build();
+            RequestConfig config = RequestConfig.custom().setProxy(proxyHost).setConnectionRequestTimeout(1000).setConnectTimeout(CM_CONNECTION_TIME).setSocketTimeout(3000).build();
             httpPost.setConfig(config);
             httpPost.setHeader("User-Agent", "Mozilla/5.0 (Windows NT 6.1) AppleWebKit/535.1 (KHTML, like Gecko) Chrome/13.0.782.41 Safari/535.1 QQBrowser/6.9.11079.201");
 
@@ -90,31 +116,67 @@ public class IpUtils {
             stringEntity.setContentType("application/x-www-form-urlencoded");
             httpPost.setEntity(stringEntity);
 
-            long preT = System.currentTimeMillis();
+            final long preT = System.currentTimeMillis();
+            flag = true;
+            System.out.println("准备execute");
+            Thread detectionTimeOutThread = new Thread(new Runnable() {
+                public void run() {
+                    while (flag) {
+                        try {
+                            Thread.sleep(1000);
+                        } catch (InterruptedException e) {
+                        }
+                        if ((System.currentTimeMillis() - preT) > CM_CONNECTION_TIME) {
+                            System.out.println(Thread.getAllStackTraces().size() + ":" + Thread.currentThread().getName() + "帮助关闭一个httpclient " + (System.currentTimeMillis() - preT));
+                            try {
+                                httpClient.close();
+                            } catch (IOException e) {
+                                logger.error("测试网易云ip时关闭httpclient出现异常" + e.getMessage());
+                            } finally {
+                                flag = false;
+                            }
+                        }
+                    }
+                }
+            });
+            detectionTimeOutThreads.add(detectionTimeOutThread);
+            detectionTimeOutThread.start();
             CloseableHttpResponse response = httpClient.execute(httpPost);
+            flag = false;
+            System.out.println("完成");
+            long conneT = System.currentTimeMillis() - preT;
             String entity = EntityUtils.toString(response.getEntity());
 
             int statusCode = response.getStatusLine().getStatusCode();
 
-            System.out.println("检测ip：" + proxyIp.getIp() + ":" + proxyIp.getPort() + "----耗时：" + (System.currentTimeMillis() - preT) + "----statusCode:" + statusCode + "----entity:" + entity);
+            logger.info("检测ip：" + proxyIp.getIp() + ":" + proxyIp.getPort() + "----耗时：" + conneT + "----statusCode:" + statusCode);
 
             if (statusCode == 200) {
                 JSONObject parseObject = JSONObject.parseObject(entity);
                 if (parseObject.getJSONArray("data").size() > 0 && 299757 == (parseObject.getJSONArray("data").getJSONObject(0).getInteger("id"))) {
-                    return true;
+                    return conneT;
                 } else {
-                    return false;
+                    return PROXY_IP_CANT_USE;
                 }
             } else {
-                return false;
+                return PROXY_IP_CANT_USE;
             }
         } catch (Exception e) {
-            return false;
+            logger.error("检测该ip" + proxyIp + "不可用" + e.getMessage());
+            flag = false;
+            return PROXY_IP_CANT_USE;
         } finally {
+            flag = false;
+            for (Thread detectionTimeOutThread : detectionTimeOutThreads) {
+                if(detectionTimeOutThread.isAlive()){
+                    detectionTimeOutThread.interrupt();
+                }
+            }
             try {
                 if (httpClient != null)
                     httpClient.close();
             } catch (IOException e) {
+                logger.error(e.getMessage());
                 e.printStackTrace();
                 // TODO: 2017/7/24
             }

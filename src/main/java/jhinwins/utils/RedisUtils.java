@@ -1,0 +1,161 @@
+package jhinwins.utils;
+
+import org.apache.log4j.Logger;
+import redis.clients.jedis.Jedis;
+import redis.clients.jedis.JedisPool;
+import redis.clients.jedis.JedisPoolConfig;
+import redis.clients.jedis.exceptions.JedisConnectionException;
+import redis.clients.jedis.exceptions.JedisDataException;
+import redis.clients.jedis.exceptions.JedisException;
+
+import java.util.Set;
+
+
+/**
+ * Created by Jhinwins on 2017/8/17  15:11.
+ * Desc:
+ */
+public class RedisUtils {
+    private static Logger logger = Logger.getLogger(RedisUtils.class);
+
+    private static JedisPool jedisPool = null;
+
+    private static Jedis getJedis() {
+        if (jedisPool == null) {
+            JedisPoolConfig config = new JedisPoolConfig();
+            config.setMaxTotal(512); // 可用连接实例的最大数目,如果赋值为-1,表示不限制.
+            config.setMaxIdle(5); // 控制一个Pool最多有多少个状态为idle(空闲的)jedis实例,默认值也是8
+            config.setMaxWaitMillis(1000 * 100); // 等待可用连接的最大时间,单位毫秒,默认值为-1,表示永不超时/如果超过等待时间,则直接抛出异常
+            config.setTestOnBorrow(true); // 在borrow一个jedis实例时,是否提前进行validate操作,如果为true,则得到的jedis实例均是可用的
+            jedisPool = new JedisPool(config, "59.110.143.71", 32771);
+//            jedisPool = new JedisPool(config, "192.168.1.128", 32768);
+        }
+        Jedis resource;
+        try {
+            resource = jedisPool.getResource();
+        } catch (Exception e) {
+            logger.error("获取jedis发生异常:" + e.getMessage());
+            resource = getJedis();
+        }
+        return resource;
+    }
+
+    private static void relaseJedis(Jedis jedis) {
+        if (jedis != null && jedisPool != null) {
+            jedisPool.returnResource(jedis);
+        }
+    }
+
+    private static void returnJedis(Jedis jedis) {
+        if (jedis != null && jedisPool != null) {
+            jedisPool.returnBrokenResource(jedis);
+        }
+    }
+
+    private static void closeResource(Jedis jedis, boolean occurException) {
+        try {
+            if (occurException) {
+                returnJedis(jedis);
+            } else {
+                relaseJedis(jedis);
+            }
+        } catch (Exception e) {
+            logger.error("释放jedis的时间发生错误:" + e.getMessage());
+        }
+    }
+
+    private static boolean handleJedisException(JedisException jedisException) {
+        if (jedisException instanceof JedisConnectionException) {
+            logger.error("Redis connection lost.", jedisException);
+        } else if (jedisException instanceof JedisDataException) {
+            if ((jedisException.getMessage() != null) && (jedisException.getMessage().indexOf("READONLY") != -1)) {
+                logger.error("Redis connection are read-only slave.", jedisException);
+            } else {
+                // dataException, isBroken=false
+                return false;
+            }
+        } else {
+            logger.error("Jedis exception happen.", jedisException);
+        }
+        return true;
+    }
+
+    public static synchronized Long zadd(String key, double score, String member) {
+        Jedis jedis = getJedis();
+        boolean broken = false;
+        Long zadd = null;
+        try {
+            zadd = jedis.zadd(key, score, member);
+        } catch (JedisException e) {
+            logger.error("jedis zadd error:" + e.getMessage());
+            broken = handleJedisException(e);
+        } finally {
+            closeResource(jedis, broken);
+        }
+        return zadd;
+
+    }
+
+    public static synchronized Long zremrangeByRank(String key, long start, long end) {
+        Jedis jedis = getJedis();
+        boolean broken = false;
+        Long aLong = null;
+        try {
+            aLong = jedis.zremrangeByRank(key, start, end);
+        } catch (JedisException e) {
+            logger.error("jedis zremrangeByRank error:" + e.getMessage());
+            broken = handleJedisException(e);
+        } finally {
+            closeResource(jedis, broken);
+        }
+        return aLong;
+
+    }
+
+    public static synchronized Long zcard(String key) {
+        Jedis jedis = getJedis();
+        boolean broken = false;
+        Long zcard = null;
+        try {
+            zcard = jedis.zcard(key);
+        } catch (JedisException e) {
+            logger.error("jedis zcard error:" + e.getMessage());
+            broken = handleJedisException(e);
+        } finally {
+            closeResource(jedis, broken);
+        }
+        return zcard;
+
+    }
+
+    public static synchronized Long zrem(String key, String... members) {
+        Jedis jedis = getJedis();
+        boolean broken = false;
+        Long zrem = null;
+        try {
+            zrem = jedis.zrem(key, members);
+        } catch (JedisException e) {
+            logger.error("jedis zrem error:" + e.getMessage());
+            broken = handleJedisException(e);
+        } finally {
+            closeResource(jedis, broken);
+        }
+        return zrem;
+    }
+
+    public static synchronized Set<String> zrange(String key, long start, long end) {
+        Jedis jedis = getJedis();
+        boolean broken = false;
+        Set<String> zrange = null;
+        try {
+            zrange = jedis.zrange(key, start, end);
+        } catch (JedisException e) {
+            logger.error("jedis zrange error:" + e.getMessage());
+            broken = handleJedisException(e);
+        } finally {
+            closeResource(jedis, broken);
+        }
+        return zrange;
+    }
+
+}

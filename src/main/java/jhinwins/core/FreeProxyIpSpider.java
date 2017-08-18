@@ -23,7 +23,7 @@ import java.util.LinkedList;
  * Desc:
  */
 public abstract class FreeProxyIpSpider {
-    private static Logger logger= Logger.getLogger(FreeProxyIpSpider.class);
+    private static Logger logger = Logger.getLogger(FreeProxyIpSpider.class);
 
     /**
      * 被爬取网页的url
@@ -61,7 +61,7 @@ public abstract class FreeProxyIpSpider {
                 try {
                     httpClient.close();
                 } catch (IOException e) {
-                    logger.error(e.getMessage());
+                    logger.error("get proxyIp html error:" + e.getMessage());
                     //do nothing
                 }
             }
@@ -76,8 +76,13 @@ public abstract class FreeProxyIpSpider {
      * @return 不会返回空
      */
     public LinkedList<ProxyIp> parseIpsFromHtml() {
+        return parseIpsFromHtml(Integer.MAX_VALUE);
+    }
+
+    public LinkedList<ProxyIp> parseIpsFromHtml(int limitCount) {
+
         try {
-            return parseIpsFromHtml(getHtml());
+            return parseIpsFromHtml(getHtml(), limitCount);
         } catch (LoadHtmlException e) {
             logger.error(e.getMessage());
             e.printStackTrace();
@@ -85,7 +90,7 @@ public abstract class FreeProxyIpSpider {
         }
     }
 
-    public LinkedList<ProxyIp> parseIpsFromHtml(String html) {
+    public LinkedList<ProxyIp> parseIpsFromHtml(String html, int limitCount) {
         LinkedList<ProxyIp> list = new LinkedList<ProxyIp>();
         //使用jsoup解析html
         Document document = Jsoup.parse(html);
@@ -108,6 +113,9 @@ public abstract class FreeProxyIpSpider {
                 continue;
             }
             list.add(proxyIp);
+            if (list.size() > limitCount)
+                break;
+
         }
         return list;
     }
