@@ -15,14 +15,12 @@ import redis.clients.jedis.exceptions.JedisException;
  * Created by Jhinwins on 2017/8/17  15:11.
  * Desc:
  */
-@Configuration
 public class RedisPool {
     private static Logger logger = Logger.getLogger(RedisPool.class);
 
     private static JedisPool jedisPool = null;
 
-    @Bean
-    private Jedis getJedis() {
+    public static synchronized Jedis getJedis() {
         if (jedisPool == null) {
             JedisPoolConfig config = new JedisPoolConfig();
             config.setMaxTotal(512); // 可用连接实例的最大数目,如果赋值为-1,表示不限制.
@@ -37,7 +35,7 @@ public class RedisPool {
             resource = jedisPool.getResource();
         } catch (Exception e) {
             logger.error("获取jedis发生异常:" + e.getMessage());
-            resource = getJedis();
+            return null;
         }
         return resource;
     }

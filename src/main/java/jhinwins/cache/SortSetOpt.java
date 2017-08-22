@@ -17,12 +17,9 @@ public class SortSetOpt {
 
     private Logger logger = Logger.getLogger(SortSetOpt.class);
 
-    @Autowired
-    private Jedis jedis;
-
-
     public Long zadd(String key, double score, String member) {
         boolean broken = false;
+        Jedis jedis = RedisPool.getJedis();
         Long zadd = null;
         try {
             zadd = jedis.zadd(key, score, member);
@@ -38,6 +35,7 @@ public class SortSetOpt {
 
     public Long zremrangeByRank(String key, long start, long end) {
         boolean broken = false;
+        Jedis jedis = RedisPool.getJedis();
         Long aLong = null;
         try {
             aLong = jedis.zremrangeByRank(key, start, end);
@@ -53,6 +51,7 @@ public class SortSetOpt {
 
     public Long zcard(String key) {
         boolean broken = false;
+        Jedis jedis = RedisPool.getJedis();
         Long zcard = null;
         try {
             zcard = jedis.zcard(key);
@@ -68,6 +67,7 @@ public class SortSetOpt {
 
     public Long zrem(String key, String... members) {
         boolean broken = false;
+        Jedis jedis = RedisPool.getJedis();
         Long zrem = null;
         try {
             zrem = jedis.zrem(key, members);
@@ -82,6 +82,7 @@ public class SortSetOpt {
 
     public Set<String> zrange(String key, long start, long end) {
         boolean broken = false;
+        Jedis jedis = RedisPool.getJedis();
         Set<String> zrange = null;
         try {
             zrange = jedis.zrange(key, start, end);
@@ -92,6 +93,35 @@ public class SortSetOpt {
             RedisPool.closeResource(jedis, broken);
         }
         return zrange;
+    }
+
+    /**
+     * 移除并获取首个元素
+     *
+     * @return 如果没有值则返回空
+     */
+    public synchronized String zpop(String key) {
+        String first = zgetFirst(key);
+        zrem(key, first);
+        return first;
+    }
+
+    public String zgetFirst(String key) {
+        boolean broken = false;
+        Jedis jedis = RedisPool.getJedis();
+        try {
+            Set<String> zrange = jedis.zrange(key, 0, 0);
+            if (zrange.size() > 0) {
+                String result = zrange.iterator().next();
+                return result;
+            }
+        } catch (JedisException e) {
+            logger.error("jedis zgetFirst error:" + e.getMessage());
+            broken = RedisPool.handleJedisException(e);
+        } finally {
+            RedisPool.closeResource(jedis, broken);
+        }
+        return null;
     }
 
 

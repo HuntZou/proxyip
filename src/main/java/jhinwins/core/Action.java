@@ -4,25 +4,27 @@ import jhinwins.NetFilter.AbstractNetFilter;
 import jhinwins.cache.SortSetOpt;
 import jhinwins.model.ProxyIp;
 import jhinwins.utils.JsonUtils;
+import org.apache.http.HttpResponse;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 import java.util.LinkedList;
 
 /**
  * Created by Jhinwins on 2017/8/18  17:04.
- * Desc:
+ * Desc:核心启动类
  */
+@Component
 public class Action {
-    @Autowired
-    private SortSetOpt sortSetOpt;
+    private SortSetOpt sortSetOpt = new SortSetOpt();
 
     /**
      * 加载原始的代理ip数据
      */
-    public void loadOriginalSource(FreeProxyIpSpider freeProxyIpSpider, String targetPool) {
+    public void loadOriginalSource(FreeProxyIpSpider freeProxyIpSpider) {
         LinkedList<ProxyIp> proxyIps = freeProxyIpSpider.parseIpsFromHtml();
         for (ProxyIp proxyIp : proxyIps) {
-            sortSetOpt.zadd(targetPool, System.currentTimeMillis(), JsonUtils.getBasicProxyIp(proxyIp));
+            sortSetOpt.zadd("originalProxyIpPool", System.currentTimeMillis(), JsonUtils.getBasicProxyIp(proxyIp));
         }
     }
 
@@ -34,7 +36,11 @@ public class Action {
      * @param targetPool        目标池
      */
     public void doNetFilter(AbstractNetFilter abstractNetFilter, String originalPool, String targetPool) {
-
+        while (sortSetOpt.zcard(originalPool) > 0) {
+            String proxyIp_str = sortSetOpt.zpop(originalPool);
+            ProxyIp proxyIp = JsonUtils.getBasicProxyIp(proxyIp_str);
+            doNetFilter(abstractNetFilter, proxyIp, targetPool);
+        }
     }
 
     /**
@@ -44,8 +50,32 @@ public class Action {
      * @param proxyIp           被检测ip
      * @param targetPool        目标池
      */
-    public void doNetFilter(AbstractNetFilter abstractNetFilter, ProxyIp proxyIp, String targetPool) {
+    public Long doNetFilter(AbstractNetFilter abstractNetFilter, ProxyIp proxyIp, String targetPool) {
+        Long preT = System.currentTimeMillis();
+        HttpResponse httpResponse = abstractNetFilter.doFilter(proxyIp);
+        Long aftT = System.currentTimeMillis();
 
+        Long responseT = aftT - preT;
+
+        if (httpResponse != null && 200 == httpResponse.getStatusLine().getStatusCode()) {
+            sortSetOpt.zadd(targetPool, responseT, JsonUtils.getBasicProxyIp(proxyIp));
+            return responseT;
+        }
+        return new Long(-1);
+    }
+
+    /**
+     * 检测首个ip是否可用,不可用则丢弃
+     *
+     * @param key
+     */
+    public Long detectionFirst(AbstractNetFilter abstractNetFilter, String key) {
+        String first = sortSetOpt.zgetFirst(key);
+        Long respT = doNetFilter(abstractNetFilter, JsonUtils.getBasicProxyIp(first), key);
+        if (respT < 0) {
+            sortSetOpt.zrem(key, first);
+        }
+        return respT;
     }
 
 }

@@ -28,6 +28,9 @@ public class JsonUtils {
      * @param basicProxyIp
      */
     public static ProxyIp getBasicProxyIp(String basicProxyIp) {
+        if (basicProxyIp == null || basicProxyIp.length() == 0) {
+            return null;
+        }
         JSONObject jsonObject = JSONObject.parseObject(basicProxyIp);
         return new ProxyIp(jsonObject.getString("ip"), jsonObject.getInteger("port"));
     }
