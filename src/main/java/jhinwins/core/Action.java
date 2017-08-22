@@ -5,7 +5,7 @@ import jhinwins.cache.SortSetOpt;
 import jhinwins.model.ProxyIp;
 import jhinwins.utils.JsonUtils;
 import org.apache.http.HttpResponse;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.apache.log4j.Logger;
 import org.springframework.stereotype.Component;
 
 import java.util.LinkedList;
@@ -16,6 +16,7 @@ import java.util.LinkedList;
  */
 @Component
 public class Action {
+    private Logger logger = Logger.getLogger(Action.class);
     private SortSetOpt sortSetOpt = new SortSetOpt();
 
     /**

@@ -14,28 +14,8 @@ public class ProxyIpService {
 
     private static SortSetOpt sortSetOpt = new SortSetOpt();
 
-    private static int flag = 0;
-
     public static ProxyIp pull() {
-        Set<String> cmProxyIpPool = null;
-        switch (flag) {
-//            case 0:
-//                cmProxyIpPool = sortSetOpt.zrange("CMProxyIpPool", 0, 0);
-//                break;
-//            case 1:
-//                cmProxyIpPool = sortSetOpt.zrange("CMProxyIpPool", 1, 1);
-//                break;
-//            case 2:
-//                cmProxyIpPool = sortSetOpt.zrange("CMProxyIpPool", 2, 2);
-//                break;
-            default:
-                cmProxyIpPool = sortSetOpt.zrange("CMProxyIpPool", 0, 0);
-                break;
-        }
-        if ((cmProxyIpPool == null || cmProxyIpPool.size() == 0) && flag != 0) {
-            cmProxyIpPool = sortSetOpt.zrange("CMProxyIpPool", 0, 0);
-        }
-        flag = flag > 2 ? 0 : ++flag;
+        Set<String> cmProxyIpPool = sortSetOpt.zrange("CMProxyIpPool", 0, 0);
         return cmProxyIpPool != null && cmProxyIpPool.size() > 0 ? JsonUtils.getBasicProxyIp(cmProxyIpPool.iterator().next()) : null;
     }
 }

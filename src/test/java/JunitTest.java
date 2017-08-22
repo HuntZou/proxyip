@@ -59,7 +59,7 @@ public class JunitTest {
                 while (true) {
                     action.loadOriginalSource(simpleProxyIpSpider);
                     try {
-                        Thread.sleep(5 * 60 * 1000);
+                        Thread.sleep((int) ((5 + Math.random()) * 60 * 1000));
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
@@ -77,24 +77,29 @@ public class JunitTest {
             }).start();
         }
 
+
         while (true) {
         }
     }
 
     @Test
     public void tPull() {
-        for (int j = 0; j < 3; j++) {
+
+        final SortSetOpt sortSetOpt = new SortSetOpt();
+//        for (int i = 0; i < 1000; i++) {
+//            sortSetOpt.zadd("test", i, "name" + i);
+//        }
+        for (int i = 0; i < 3; i++) {
             new Thread(new Runnable() {
                 public void run() {
-                    for (int i = 0; i < 1000; i++) {
-                        ProxyIp pull = ProxyIpService.pull();
-                        System.out.println(Thread.currentThread().getName() + " : " + pull.getIp());
+                    for (int i = 0; i < 300; i++) {
+                        String test = sortSetOpt.zpop("test");
+                        System.out.println(test);
                     }
                 }
             }).start();
         }
-        while (true) {
-        }
+        while (true){}
     }
 
 }
