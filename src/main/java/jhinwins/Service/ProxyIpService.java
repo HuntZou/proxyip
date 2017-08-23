@@ -14,8 +14,17 @@ public class ProxyIpService {
 
     private static SortSetOpt sortSetOpt = new SortSetOpt();
 
-    public static ProxyIp pull() {
-        Set<String> cmProxyIpPool = sortSetOpt.zrange("CMProxyIpPool", 0, 0);
+    public static ProxyIp pull(String targetPool) {
+        Set<String> cmProxyIpPool = sortSetOpt.zrange(targetPool, 0, 0);
         return cmProxyIpPool != null && cmProxyIpPool.size() > 0 ? JsonUtils.getBasicProxyIp(cmProxyIpPool.iterator().next()) : null;
+    }
+
+    public static synchronized ProxyIp remove(String targetPool, ProxyIp proxyIp) {
+        String member = JsonUtils.getBasicProxyIp(proxyIp);
+        Long rmCount = sortSetOpt.zrem(targetPool, member);
+        if (rmCount > 0) {
+            return proxyIp;
+        }
+        return null;
     }
 }

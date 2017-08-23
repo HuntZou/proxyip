@@ -18,6 +18,7 @@ public class SortSetOpt {
     private Logger logger = Logger.getLogger(SortSetOpt.class);
 
     public Long zadd(String key, double score, String member) {
+        if (member == null) return -1L;
         boolean broken = false;
         Jedis jedis = RedisPool.getJedis();
         Long zadd = null;
@@ -66,6 +67,7 @@ public class SortSetOpt {
     }
 
     public Long zrem(String key, String... members) {
+        if (members == null || members.length == 0 || members[0] == null) return -1L;
         boolean broken = false;
         Jedis jedis = RedisPool.getJedis();
         Long zrem = null;

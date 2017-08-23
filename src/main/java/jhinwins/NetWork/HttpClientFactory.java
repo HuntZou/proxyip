@@ -1,5 +1,7 @@
 package jhinwins.NetWork;
 
+import org.apache.http.client.HttpRequestRetryHandler;
+import org.apache.http.client.config.RequestConfig;
 import org.apache.http.config.Registry;
 import org.apache.http.config.RegistryBuilder;
 import org.apache.http.conn.socket.ConnectionSocketFactory;
@@ -8,6 +10,9 @@ import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
+import org.apache.http.protocol.HttpContext;
+
+import java.io.IOException;
 
 /**
  * Created by Jhinwins on 2017/8/11  10:54.
@@ -15,7 +20,7 @@ import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
  */
 public class HttpClientFactory {
     private static CloseableHttpClient httpClient;
-    private static Object syLock = new Object();
+    private final static Object syLock = new Object();
 
     /**
      * 获取单例httpclient实例
@@ -30,7 +35,21 @@ public class HttpClientFactory {
                             .register("https", SSLConnectionSocketFactory.getSocketFactory())
                             .build();
                     PoolingHttpClientConnectionManager httpClientConnectionManager = new PoolingHttpClientConnectionManager(socketFactoryRegistry);
-                    httpClient = HttpClients.custom().setConnectionManager(httpClientConnectionManager).build();
+
+                    RequestConfig defaultRequestConfig = RequestConfig.custom()
+                            .setSocketTimeout(5000)
+                            .setConnectTimeout(5000)
+                            .setConnectionRequestTimeout(5000)
+                            .setStaleConnectionCheckEnabled(true)
+                            .build();
+
+                    HttpRequestRetryHandler myRetryHandler = new HttpRequestRetryHandler() {
+                        public boolean retryRequest(IOException exception, int executionCount, HttpContext context) {
+                            return false;
+                        }
+                    };
+
+                    httpClient = HttpClients.custom().setConnectionManager(httpClientConnectionManager).setDefaultRequestConfig(defaultRequestConfig).setRetryHandler(myRetryHandler).build();
                 }
             }
         }

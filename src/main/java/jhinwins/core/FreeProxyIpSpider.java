@@ -2,6 +2,7 @@ package jhinwins.core;
 
 
 import jhinwins.Exception.LoadHtmlException;
+import jhinwins.NetWork.HttpClientFactory;
 import jhinwins.model.ProxyIp;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
@@ -43,9 +44,9 @@ public abstract class FreeProxyIpSpider {
     public String getHtml() throws LoadHtmlException {
         String html = "";
 
-        CloseableHttpClient httpClient = HttpClients.createDefault();
+        CloseableHttpClient httpClient = HttpClientFactory.getHttpClient();
+        HttpGet provider = new HttpGet(providerUrl);
         try {
-            HttpGet provider = new HttpGet(providerUrl);
             provider.setHeader("User-Agent", "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/59.0.3071.115 Safari/537.36");
             CloseableHttpResponse httpResponse = httpClient.execute(provider);
             BufferedReader reader = new BufferedReader(new InputStreamReader(httpResponse.getEntity().getContent(), "gbk"));
@@ -57,13 +58,8 @@ public abstract class FreeProxyIpSpider {
             logger.error(e.getMessage());
             throw new LoadHtmlException();
         } finally {
-            if (httpClient != null) {
-                try {
-                    httpClient.close();
-                } catch (IOException e) {
-                    logger.error("get proxyIp html error:" + e.getMessage());
-                    //do nothing
-                }
+            if (provider != null) {
+                provider.releaseConnection();
             }
         }
 

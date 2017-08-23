@@ -63,9 +63,12 @@ public abstract class AbstractNetFilter {
 
             HttpResponse response;
             try {
+                System.out.println(Thread.currentThread().getName() + "执行httpClient.execute方法");
                 response = httpClient.execute(httpPost);
+                System.out.println(Thread.currentThread().getName() + "执行httpClient.execute方法完毕");
                 return response;
             } catch (IOException e) {
+                System.out.println(Thread.currentThread().getName() + "执行httpClient.execute方法发生异常" + e.getMessage());
                 return null;
             }
         } finally {

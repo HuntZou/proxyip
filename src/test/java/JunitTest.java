@@ -11,6 +11,10 @@ import org.jsoup.select.Elements;
 import org.junit.Test;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
+
 /**
  * Created by Jhinwins on 2017/7/24  17:17.
  * Desc:
@@ -59,13 +63,14 @@ public class JunitTest {
                 while (true) {
                     action.loadOriginalSource(simpleProxyIpSpider);
                     try {
-                        Thread.sleep((int) ((5 + Math.random()) * 60 * 1000));
+                        Thread.sleep((int) ((2 + Math.random()) * 60 * 1000));
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
                 }
             }
         }).start();
+
 
         for (int i = 0; i < 2; i++) {
             new Thread(new Runnable() {
@@ -77,6 +82,18 @@ public class JunitTest {
             }).start();
         }
 
+        new Thread(new Runnable() {
+            public void run() {
+                while (true) {
+                    try {
+                        Thread.sleep((int) ((30 + (20 * Math.random())) * 1000));
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                    action.detectionFirst(new CMNetFilter(), "CMProxyIpPool");
+                }
+            }
+        }).start();
 
         while (true) {
         }
@@ -99,7 +116,8 @@ public class JunitTest {
                 }
             }).start();
         }
-        while (true){}
+        while (true) {
+        }
     }
 
 }
