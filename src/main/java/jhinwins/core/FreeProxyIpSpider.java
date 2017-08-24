@@ -58,9 +58,7 @@ public abstract class FreeProxyIpSpider {
             logger.error(e.getMessage());
             throw new LoadHtmlException();
         } finally {
-            if (provider != null) {
-                provider.releaseConnection();
-            }
+            provider.releaseConnection();
         }
 
         return html;
@@ -87,6 +85,7 @@ public abstract class FreeProxyIpSpider {
     }
 
     public LinkedList<ProxyIp> parseIpsFromHtml(String html, int limitCount) {
+        if (html == null) return null;
         LinkedList<ProxyIp> list = new LinkedList<ProxyIp>();
         //使用jsoup解析html
         Document document = Jsoup.parse(html);

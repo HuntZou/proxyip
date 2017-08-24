@@ -32,7 +32,7 @@ public class JunitTest {
     }
 
     @Test
-    public void tSpring() {
+    public void tSpring() throws InterruptedException {
 
         final SimpleProxyIpSpider simpleProxyIpSpider = new SimpleProxyIpSpider("http://www.xicidaili.com/nn/") {
             @Override
@@ -70,7 +70,6 @@ public class JunitTest {
                 }
             }
         }).start();
-
 
         for (int i = 0; i < 2; i++) {
             new Thread(new Runnable() {

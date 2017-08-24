@@ -1,7 +1,6 @@
 package jhinwins.cache;
 
 import org.apache.log4j.Logger;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.exceptions.JedisException;
@@ -21,6 +20,9 @@ public class SortSetOpt {
         if (member == null) return -1L;
         boolean broken = false;
         Jedis jedis = RedisPool.getJedis();
+        if (jedis == null) {
+            return -1L;
+        }
         Long zadd = null;
         try {
             zadd = jedis.zadd(key, score, member);
@@ -37,6 +39,9 @@ public class SortSetOpt {
     public Long zremrangeByRank(String key, long start, long end) {
         boolean broken = false;
         Jedis jedis = RedisPool.getJedis();
+        if (jedis == null) {
+            return -1L;
+        }
         Long aLong = null;
         try {
             aLong = jedis.zremrangeByRank(key, start, end);
@@ -53,6 +58,9 @@ public class SortSetOpt {
     public Long zcard(String key) {
         boolean broken = false;
         Jedis jedis = RedisPool.getJedis();
+        if (jedis == null) {
+            return -1L;
+        }
         Long zcard = null;
         try {
             zcard = jedis.zcard(key);
@@ -70,6 +78,9 @@ public class SortSetOpt {
         if (members == null || members.length == 0 || members[0] == null) return -1L;
         boolean broken = false;
         Jedis jedis = RedisPool.getJedis();
+        if (jedis == null) {
+            return -1L;
+        }
         Long zrem = null;
         try {
             zrem = jedis.zrem(key, members);
@@ -85,6 +96,9 @@ public class SortSetOpt {
     public Set<String> zrange(String key, long start, long end) {
         boolean broken = false;
         Jedis jedis = RedisPool.getJedis();
+        if (jedis == null) {
+            return null;
+        }
         Set<String> zrange = null;
         try {
             zrange = jedis.zrange(key, start, end);
@@ -111,11 +125,13 @@ public class SortSetOpt {
     public String zgetFirst(String key) {
         boolean broken = false;
         Jedis jedis = RedisPool.getJedis();
+        if (jedis == null) {
+            return null;
+        }
         try {
             Set<String> zrange = jedis.zrange(key, 0, 0);
             if (zrange.size() > 0) {
-                String result = zrange.iterator().next();
-                return result;
+                return zrange.iterator().next();
             }
         } catch (JedisException e) {
             logger.error("jedis zgetFirst error:" + e.getMessage());
