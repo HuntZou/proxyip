@@ -4,10 +4,9 @@ package jhinwins.core;
 import jhinwins.Exception.LoadHtmlException;
 import jhinwins.NetWork.HttpClientFactory;
 import jhinwins.model.ProxyIp;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
+import org.apache.commons.httpclient.HttpClient;
+import org.apache.commons.httpclient.HttpStatus;
+import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.log4j.Logger;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -44,12 +43,17 @@ public abstract class FreeProxyIpSpider {
     public String getHtml() throws LoadHtmlException {
         String html = "";
 
-        CloseableHttpClient httpClient = HttpClientFactory.getHttpClient();
-        HttpGet provider = new HttpGet(providerUrl);
+        HttpClient httpClient = HttpClientFactory.getHttpClient();
+        String proxyHost = httpClient.getHostConfiguration().getProxyHost();
+        System.out.println("加载源html，proxyHost：" + proxyHost);
+        GetMethod provider = new GetMethod(providerUrl);
         try {
-            provider.setHeader("User-Agent", "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/59.0.3071.115 Safari/537.36");
-            CloseableHttpResponse httpResponse = httpClient.execute(provider);
-            BufferedReader reader = new BufferedReader(new InputStreamReader(httpResponse.getEntity().getContent(), "gbk"));
+            int statuCode = httpClient.executeMethod(provider);
+            if (statuCode != HttpStatus.SC_OK) {
+                return null;
+            }
+
+            BufferedReader reader = new BufferedReader(new InputStreamReader(provider.getResponseBodyAsStream(), "gbk"));
             String buff;
             while ((buff = reader.readLine()) != null) {
                 html += buff;
@@ -60,7 +64,6 @@ public abstract class FreeProxyIpSpider {
         } finally {
             provider.releaseConnection();
         }
-
         return html;
     }
 

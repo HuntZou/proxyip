@@ -1,16 +1,19 @@
 package jhinwins.NetFilter;
 
+import com.sun.deploy.net.HttpResponse;
 import jhinwins.NetWork.HttpClientFactory;
 import jhinwins.model.ProxyIp;
 import jhinwins.utils.NetUtils;
-import org.apache.http.HttpHost;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.config.RequestConfig;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.commons.httpclient.Header;
+import org.apache.commons.httpclient.HttpClient;
+import org.apache.commons.httpclient.HttpHost;
+import org.apache.commons.httpclient.URIException;
+import org.apache.commons.httpclient.methods.PostMethod;
 import org.apache.log4j.Logger;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by Jhinwins on 2017/8/18  15:28.
@@ -28,7 +31,7 @@ public abstract class AbstractNetFilter {
      * @param httpPost
      * @return
      */
-    public abstract HttpPost setReq(HttpPost httpPost);
+    public abstract PostMethod setReq(PostMethod httpPost);
 
     /**
      * 执行过滤的方法
@@ -36,23 +39,23 @@ public abstract class AbstractNetFilter {
      * @param proxyIp
      * @return http响应
      */
-    public HttpResponse doFilter(ProxyIp proxyIp) {
+    public PostMethod doFilter(ProxyIp proxyIp) {
 
         if (proxyIp == null) {
             return null;
         }
 
-        CloseableHttpClient httpClient = HttpClientFactory.getHttpClient();
+        HttpClient httpClient = HttpClientFactory.getProxyHttpClient();
 
-        HttpPost httpPost = new HttpPost("http://59.110.143.71:80/CMSpider4web/testProxyip");
+        PostMethod httpPost = new PostMethod("http://59.110.143.71:80/CMSpider4web/testProxyip");
         try {
             //模拟浏览器请求头
-            httpPost.setHeader("User-Agent", NetUtils.getUserAgent());
+            List<Header> headers = new ArrayList<Header>();
+            headers.add(new Header("User-Agent", NetUtils.getUserAgent()));
+            httpClient.getHostConfiguration().getParams().setParameter("http.default-headers", headers);
 
             //使用代理ip
-            HttpHost proxyHost = new HttpHost(proxyIp.getIp(), proxyIp.getPort());
-            RequestConfig requestConfig = RequestConfig.custom().setProxy(proxyHost).setSocketTimeout(getSocketTimeout()).setConnectTimeout(getConnectTimeout()).setConnectionRequestTimeout(getConnectionRequestTimeout()).build();
-            httpPost.setConfig(requestConfig);
+            httpClient.getHostConfiguration().setProxy(proxyIp.getIp(), proxyIp.getPort());
 
             httpPost = setReq(httpPost);
 
@@ -61,20 +64,22 @@ public abstract class AbstractNetFilter {
                 return null;
             }
 
-            HttpResponse response;
             try {
                 System.out.println(Thread.currentThread().getName() + "执行httpClient.execute方法");
-                response = httpClient.execute(httpPost);
+                httpClient.executeMethod(httpPost);
                 System.out.println(Thread.currentThread().getName() + "执行httpClient.execute方法完毕");
-                return response;
+                return httpPost;
             } catch (IOException e) {
                 System.out.println(Thread.currentThread().getName() + "执行httpClient.execute方法发生异常" + e.getMessage());
                 return null;
             }
+        } catch (URIException e) {
+            logger.error("AbstractNetFilter.doFilter发生异常" + e.getMessage());
         } finally {
             if (httpPost != null)
                 httpPost.releaseConnection();
         }
+        return null;
     }
 
     public int getConnectionRequestTimeout() {

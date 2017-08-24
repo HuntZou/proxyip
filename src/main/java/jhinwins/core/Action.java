@@ -4,7 +4,7 @@ import jhinwins.NetFilter.AbstractNetFilter;
 import jhinwins.cache.SortSetOpt;
 import jhinwins.model.ProxyIp;
 import jhinwins.utils.JsonUtils;
-import org.apache.http.HttpResponse;
+import org.apache.commons.httpclient.methods.PostMethod;
 import org.apache.log4j.Logger;
 import org.springframework.stereotype.Component;
 
@@ -55,7 +55,7 @@ public class Action {
     public Long doNetFilter(AbstractNetFilter abstractNetFilter, ProxyIp proxyIp, String targetPool) {
         if (proxyIp == null) return -1L;
         Long preT = System.currentTimeMillis();
-        HttpResponse httpResponse = abstractNetFilter.doFilter(proxyIp);
+        PostMethod httpResponse = abstractNetFilter.doFilter(proxyIp);
         Long aftT = System.currentTimeMillis();
 
         Long responseT = aftT - preT;
