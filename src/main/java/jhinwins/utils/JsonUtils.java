@@ -1,6 +1,5 @@
 package jhinwins.utils;
 
-import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import jhinwins.model.ProxyIp;
 

@@ -1,12 +1,10 @@
 package jhinwins.NetFilter;
 
-import com.sun.deploy.net.HttpResponse;
 import jhinwins.NetWork.HttpClientFactory;
 import jhinwins.model.ProxyIp;
 import jhinwins.utils.NetUtils;
 import org.apache.commons.httpclient.Header;
 import org.apache.commons.httpclient.HttpClient;
-import org.apache.commons.httpclient.HttpHost;
 import org.apache.commons.httpclient.URIException;
 import org.apache.commons.httpclient.methods.PostMethod;
 import org.apache.log4j.Logger;
@@ -65,12 +63,9 @@ public abstract class AbstractNetFilter {
             }
 
             try {
-                System.out.println(Thread.currentThread().getName() + "执行httpClient.execute方法");
                 httpClient.executeMethod(httpPost);
-                System.out.println(Thread.currentThread().getName() + "执行httpClient.execute方法完毕");
                 return httpPost;
             } catch (IOException e) {
-                System.out.println(Thread.currentThread().getName() + "执行httpClient.execute方法发生异常" + e.getMessage());
                 return null;
             }
         } catch (URIException e) {

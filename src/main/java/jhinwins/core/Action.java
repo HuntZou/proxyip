@@ -24,10 +24,11 @@ public class Action {
      */
     public void loadOriginalSource(FreeProxyIpSpider freeProxyIpSpider) {
         LinkedList<ProxyIp> proxyIps = freeProxyIpSpider.parseIpsFromHtml();
-        if (proxyIps != null && proxyIps.size() > 0)
+        if (proxyIps != null && proxyIps.size() > 0) {
             for (ProxyIp proxyIp : proxyIps) {
                 sortSetOpt.zadd("originalProxyIpPool", System.currentTimeMillis(), JsonUtils.getBasicProxyIp(proxyIp));
             }
+        }
     }
 
     /**
@@ -64,7 +65,7 @@ public class Action {
             sortSetOpt.zadd(targetPool, responseT, JsonUtils.getBasicProxyIp(proxyIp));
             return responseT;
         }
-        return new Long(-1);
+        return -1L;
     }
 
     /**

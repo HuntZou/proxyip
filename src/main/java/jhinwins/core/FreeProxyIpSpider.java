@@ -3,6 +3,7 @@ package jhinwins.core;
 
 import jhinwins.Exception.LoadHtmlException;
 import jhinwins.NetWork.HttpClientFactory;
+import jhinwins.Service.ProxyIpService;
 import jhinwins.model.ProxyIp;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.HttpStatus;
@@ -40,12 +41,11 @@ public abstract class FreeProxyIpSpider {
      * @return
      * @throws IOException
      */
-    public String getHtml() throws LoadHtmlException {
+    private String getHtml() throws LoadHtmlException {
         String html = "";
 
         HttpClient httpClient = HttpClientFactory.getHttpClient();
-        String proxyHost = httpClient.getHostConfiguration().getProxyHost();
-        System.out.println("加载源html，proxyHost：" + proxyHost);
+
         GetMethod provider = new GetMethod(providerUrl);
         try {
             int statuCode = httpClient.executeMethod(provider);
@@ -53,7 +53,7 @@ public abstract class FreeProxyIpSpider {
                 return null;
             }
 
-            BufferedReader reader = new BufferedReader(new InputStreamReader(provider.getResponseBodyAsStream(), "gbk"));
+            BufferedReader reader = new BufferedReader(new InputStreamReader(provider.getResponseBodyAsStream(), "utf-8"));
             String buff;
             while ((buff = reader.readLine()) != null) {
                 html += buff;
@@ -87,7 +87,7 @@ public abstract class FreeProxyIpSpider {
         }
     }
 
-    public LinkedList<ProxyIp> parseIpsFromHtml(String html, int limitCount) {
+    private LinkedList<ProxyIp> parseIpsFromHtml(String html, int limitCount) {
         if (html == null) return null;
         LinkedList<ProxyIp> list = new LinkedList<ProxyIp>();
         //使用jsoup解析html
