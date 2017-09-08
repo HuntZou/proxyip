@@ -100,23 +100,8 @@ public class JunitTest {
 
     @Test
     public void tPull() {
-
-        final SortSetOpt sortSetOpt = new SortSetOpt();
-//        for (int i = 0; i < 1000; i++) {
-//            sortSetOpt.zadd("test", i, "name" + i);
-//        }
-        for (int i = 0; i < 3; i++) {
-            new Thread(new Runnable() {
-                public void run() {
-                    for (int i = 0; i < 300; i++) {
-                        String test = sortSetOpt.zpop("test");
-                        System.out.println(test);
-                    }
-                }
-            }).start();
-        }
-        while (true) {
-        }
+        String str = "ab\"cd";
+        System.out.println(str.replaceAll("\\\\", ""));
     }
 
 }

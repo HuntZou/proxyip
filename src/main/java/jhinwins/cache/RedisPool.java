@@ -26,8 +26,7 @@ public class RedisPool {
             config.setMaxWaitMillis(1000 * 100); // 等待可用连接的最大时间,单位毫秒,默认值为-1,表示永不超时/如果超过等待时间,则直接抛出异常
             config.setTestOnBorrow(true); // 在borrow一个jedis实例时,是否提前进行validate操作,如果为true,则得到的jedis实例均是可用的
 //            jedisPool = new JedisPool(config, "172.17.208.57", 6379);
-            jedisPool = new JedisPool(config, "59.110.143.71", 6379);
-//            jedisPool = new JedisPool(config, "192.168.1.128", 32768);
+            jedisPool = new JedisPool(config, "59.110.143.71", 6379,5000,"zh613");
         }
         Jedis resource;
         try {

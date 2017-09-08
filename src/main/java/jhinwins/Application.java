@@ -1,7 +1,6 @@
 package jhinwins;
 
 import jhinwins.NetFilter.Impl.CMNetFilter;
-import jhinwins.NetFilter.Impl.SimpleNetFilter;
 import jhinwins.core.Action;
 import jhinwins.core.impl.SimpleProxyIpSpider;
 import org.jsoup.nodes.Document;
@@ -15,7 +14,7 @@ import org.jsoup.select.Elements;
 public class Application {
 
     public static void main(String[] params) {
-        runXici(20, 30, 2);
+        runXici(10, 30, 2);
     }
 
     /**
